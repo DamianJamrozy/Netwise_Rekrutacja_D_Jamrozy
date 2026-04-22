@@ -1,0 +1,45 @@
+﻿@model Netwise_Rekrutacja_D_Jamrozy.Models.ViewModels.HomeViewModel
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero">
+    <div class="hero-card">
+        <p class="hero-eyebrow">Today’s cat fact</p>
+        <h1 class="hero-title">A fresh fact from the API</h1>
+
+        @if (Model.HasError)
+        {
+            <div class="status-box status-box-error">
+                <p class="status-box-title">Unable to load a new fact</p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                {
+                    <p>@Model.ErrorMessage</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorCode))
+                {
+                    <p><strong>Error code:</strong> @Model.ErrorCode</p>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="hero-description">@Model.Fact</p>
+
+            @if (Model.RetrievedAtUtc.HasValue)
+            {
+                <p class="hero-meta">
+                    Retrieved at: @Model.RetrievedAtUtc.Value.ToString("yyyy-MM-dd HH:mm:ss") UTC
+                </p>
+            }
+        }
+
+        <div class="hero-actions">
+            <a class="button button-primary" href="/admin">Open admin panel</a>
+            <a class="button button-secondary" href="/">Load another fact</a>
+        </div>
+    </div>
+</section>

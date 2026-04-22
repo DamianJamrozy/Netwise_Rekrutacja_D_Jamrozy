@@ -1,0 +1,27 @@
+﻿@model Netwise_Rekrutacja_D_Jamrozy.Models.ViewModels.ErrorViewModel
+
+@{
+    ViewData["Title"] = "Error";
+}
+
+<section class="error-page">
+    <div class="panel panel-error">
+        <p class="section-label">Application error</p>
+        <h1>Something went wrong</h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <p>@Model.Message</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorCode))
+        {
+            <p><strong>Error code:</strong> @Model.ErrorCode</p>
+        }
+
+        @if (Model.ShowRequestId)
+        {
+            <p><strong>Request ID:</strong> @Model.RequestId</p>
+        }
+    </div>
+</section>

@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Netwise_Rekrutacja_D_Jamrozy</title>
+    <meta name="description" content="Recruitment task application based on cat facts API." />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="topbar-container">
+                <a class="brand" asp-controller="Home" asp-action="Index">Netwise_Rekrutacja_D_Jamrozy</a>
+
+                <nav class="main-nav" aria-label="Main navigation">
+                    <a asp-controller="Home" asp-action="Index">Home</a>
+                    <a asp-controller="Admin" asp-action="Index">Admin</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main-content">
+            @RenderBody()
+        </main>
+
+        <footer class="footer">
+            <div class="footer-container">
+                <p>
+                    Author:
+                    <a href="https://github.com/" target="_blank" rel="noopener noreferrer">Damian Jamroży</a>
+                </p>
+                <p>Task created for recruitment purposes.</p>
+            </div>
+        </footer>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

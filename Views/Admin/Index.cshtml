@@ -1,0 +1,373 @@
+﻿@using System.Text
+@model Netwise_Rekrutacja_D_Jamrozy.Models.ViewModels.AdminIndexViewModel
+
+@{
+    ViewData["Title"] = "Admin";
+    var canManageFactsFile = string.Equals(Model.SelectedFileName, Model.FactsFileName, StringComparison.OrdinalIgnoreCase);
+    var isEntriesTab = string.Equals(Model.ActiveTab, "entries", StringComparison.OrdinalIgnoreCase);
+    var isLogsTab = string.Equals(Model.ActiveTab, "logs", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="admin-page">
+    <div class="page-header">
+        <div>
+            <p class="section-label">Admin panel</p>
+            <h1>Stored cat facts</h1>
+            <p class="section-description">
+                You can preview stored entries, fetch new API facts, manage the main data file and inspect application logs.
+            </p>
+        </div>
+    </div>
+
+    <form id="anti-forgery-form">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div id="admin-page-config"
+         class="hidden"
+         data-selected-file-name="@Model.SelectedFileName"
+         data-facts-file-name="@Model.FactsFileName"
+         data-can-manage-facts-file="@canManageFactsFile.ToString().ToLowerInvariant()">
+    </div>
+
+    <div class="panel">
+        <div class="tabs-nav" role="tablist" aria-label="Admin sections">
+            <a class="tab-link @(isEntriesTab ? "tab-link-active" : string.Empty)"
+               asp-controller="Admin"
+               asp-action="Index"
+               asp-route-fileName="@Model.SelectedFileName"
+               asp-route-tab="entries">
+                Entries
+            </a>
+            <a class="tab-link @(isLogsTab ? "tab-link-active" : string.Empty)"
+               asp-controller="Admin"
+               asp-action="Index"
+               asp-route-fileName="@Model.SelectedFileName"
+               asp-route-tab="logs"
+               asp-route-logFileName="@Model.SelectedLogFileName">
+                Logs
+            </a>
+        </div>
+    </div>
+
+    @if (isEntriesTab)
+    {
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Data source</h2>
+                    <p class="panel-subtitle">Choose a text file to preview its contents.</p>
+                </div>
+            </div>
+
+            <form id="admin-controls-form" class="admin-controls" method="get" asp-controller="Admin" asp-action="Index">
+                <input type="hidden" name="tab" value="entries" />
+
+                <div class="field-group">
+                    <label class="field-label" for="fileName">File</label>
+                    <select id="fileName" name="fileName" class="field-input">
+                        @foreach (var fileName in Model.AvailableFiles)
+                        {
+                            if (string.Equals(fileName, Model.SelectedFileName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@fileName" selected="selected">@fileName</option>
+                            }
+                            else
+                            {
+                                <option value="@fileName">@fileName</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="admin-actions">
+                    <button type="submit" class="button button-secondary">Load selected file</button>
+
+                    @if (canManageFactsFile)
+                    {
+                        <button type="button" id="fetch-fact-button" class="button button-primary">
+                            Fetch new fact
+                        </button>
+                    }
+                </div>
+            </form>
+
+            <div id="admin-status" class="status-box hidden" role="status" aria-live="polite"></div>
+        </div>
+
+        @if (canManageFactsFile)
+        {
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="entry-form-title">Create manual entry</h2>
+                        <p class="panel-subtitle">You can add your own entry or edit an existing one.</p>
+                    </div>
+                </div>
+
+                <form id="entry-form" class="entry-form">
+                    <input type="hidden" id="entry-id" value="" />
+
+                    <div class="field-group field-group-full">
+                        <label class="field-label" for="entry-fact">Fact</label>
+                        <textarea id="entry-fact"
+                          class="field-textarea"
+                          rows="5"
+                          maxlength="1000"
+                          placeholder="Type a fact here..."></textarea>
+                    </div>
+
+                    <div class="admin-actions">
+                        <button type="button" id="create-entry-button" class="button button-primary">
+                            Save manual entry
+                        </button>
+                        <button type="button" id="update-entry-button" class="button button-secondary hidden">
+                            Update selected entry
+                        </button>
+                        <button type="button" id="cancel-edit-button" class="button button-ghost hidden">
+                            Cancel edit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Entries</h2>
+                    <p class="panel-subtitle">
+                        Current file: <strong id="selected-file-label">@Model.SelectedFileName</strong>
+                    </p>
+                </div>
+                <div>
+                    <p class="panel-subtitle">
+                        Total rows: <strong id="entries-count">@Model.Entries.Count</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div id="entries-empty-state" class="empty-state @(Model.Entries.Any() ? "hidden" : string.Empty)">
+                No entries found in the selected file.
+            </div>
+
+            <div id="entries-table-wrap" class="table-wrap @(Model.Entries.Any() ? string.Empty : "hidden")">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-line">
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="lineNumber">
+                                    Line
+                                </button>
+                            </th>
+                            <th class="col-created-at">
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="createdAtUtc">
+                                    Created at (UTC)
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="fact">
+                                    Fact
+                                </button>
+                            </th>
+                            <th class="col-length">
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="length">
+                                    Length
+                                </button>
+                            </th>
+                            <th class="col-source">
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="source">
+                                    Source
+                                </button>
+                            </th>
+                            <th class="col-id">
+                                <button type="button" class="sort-button" data-sort-target="entries" data-sort-key="id">
+                                    Id
+                                </button>
+                            </th>
+                            @if (canManageFactsFile)
+                            {
+                                <th class="col-actions">Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody id="entries-table-body">
+                        @foreach (var entry in Model.Entries)
+                        {
+                            var factBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(entry.Fact));
+
+                            <tr data-entry-id="@entry.Id"
+                                data-line-number="@entry.LineNumber"
+                                data-fact-base64="@factBase64"
+                                data-created-at-utc="@entry.CreatedAtUtc.ToString("O")"
+                                data-length="@entry.Length"
+                                data-source="@entry.Source">
+                                <td>@entry.LineNumber</td>
+                                <td>@entry.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>@entry.Fact</td>
+                                <td>@entry.Length</td>
+                                <td>@entry.Source</td>
+                                <td class="id-cell">@entry.Id</td>
+                                @if (canManageFactsFile)
+                                {
+                                    <td class="actions-cell">
+                                        <div class="actions-stack">
+                                            <button type="button" class="table-action-button" data-action="edit" data-entry-id="@entry.Id">
+                                                Edit
+                                            </button>
+                                            <button type="button" class="table-action-button table-action-button-danger" data-action="delete" data-entry-id="@entry.Id">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (isLogsTab)
+    {
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Application logs</h2>
+                    <p class="panel-subtitle">Read-only preview of recent log lines.</p>
+                </div>
+            </div>
+
+            <form method="get" asp-controller="Admin" asp-action="Index" class="admin-controls">
+                <input type="hidden" name="tab" value="logs" />
+                <input type="hidden" name="fileName" value="@Model.SelectedFileName" />
+
+                <div class="field-group">
+                    <label class="field-label" for="logFileName">Log file</label>
+                    <select id="logFileName" name="logFileName" class="field-input">
+                        @foreach (var fileName in Model.AvailableLogFiles)
+                        {
+                            if (string.Equals(fileName, Model.SelectedLogFileName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@fileName" selected="selected">@fileName</option>
+                            }
+                            else
+                            {
+                                <option value="@fileName">@fileName</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="logPageSize">Lines per page</label>
+                    <select id="logPageSize" name="logPageSize" class="field-input">
+                        @foreach (var pageSize in new[] { 10, 20, 50 })
+                        {
+                            if (Model.SelectedLogFile?.PageSize == pageSize)
+                            {
+                                <option value="@pageSize" selected="selected">@pageSize</option>
+                            }
+                            else
+                            {
+                                <option value="@pageSize">@pageSize</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="admin-actions">
+                    <button type="submit" class="button button-secondary">Load log file</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>@Model.SelectedLogFile?.FileName</h2>
+                    <p class="panel-subtitle">
+                        Showing newest entries first by default. Log retention is limited to the last 30 days.
+                    </p>
+                </div>
+                <div>
+                    <p class="panel-subtitle">
+                        Total lines: <strong>@(Model.SelectedLogFile?.TotalLines ?? 0)</strong>
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.SelectedLogFile is not null && Model.SelectedLogFile.Lines.Any())
+            {
+                <div class="table-wrap">
+                    <table class="data-table log-table">
+                        <thead>
+                            <tr>
+                                <th class="col-line">
+                                    <button type="button" class="sort-button" data-sort-target="logs" data-sort-key="lineNumber">
+                                        Lp.
+                                    </button>
+                                </th>
+                                <th>
+                                    Content
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            @foreach (var line in Model.SelectedLogFile.Lines)
+                            {
+                                <tr data-line-number="@line.LineNumber">
+                                    <td class="log-line-number-cell">@line.LineNumber</td>
+                                    <td class="log-line-content-cell">@line.Content</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-bar">
+                    @if (Model.SelectedLogFile.CurrentPage > 1)
+                    {
+                        <a class="button button-secondary"
+                           asp-controller="Admin"
+                           asp-action="Index"
+                           asp-route-tab="logs"
+                           asp-route-fileName="@Model.SelectedFileName"
+                           asp-route-logFileName="@Model.SelectedLogFileName"
+                           asp-route-logPage="@(Model.SelectedLogFile.CurrentPage - 1)"
+                           asp-route-logPageSize="@Model.SelectedLogFile.PageSize">
+                            Previous
+                        </a>
+                    }
+
+                    <span class="pagination-info">
+                        Page @Model.SelectedLogFile.CurrentPage of @(Model.SelectedLogFile.TotalPages == 0 ? 1 : Model.SelectedLogFile.TotalPages)
+                    </span>
+
+                    @if (Model.SelectedLogFile.TotalPages > 0 && Model.SelectedLogFile.CurrentPage < Model.SelectedLogFile.TotalPages)
+                    {
+                        <a class="button button-secondary"
+                           asp-controller="Admin"
+                           asp-action="Index"
+                           asp-route-tab="logs"
+                           asp-route-fileName="@Model.SelectedFileName"
+                           asp-route-logFileName="@Model.SelectedLogFileName"
+                           asp-route-logPage="@(Model.SelectedLogFile.CurrentPage + 1)"
+                           asp-route-logPageSize="@Model.SelectedLogFile.PageSize">
+                            Next
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-state">No log entries found.</p>
+            }
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+}
