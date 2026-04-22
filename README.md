@@ -13,7 +13,7 @@ Aplikacja pobiera ciekawostki z endpointu:
 
 `https://catfact.ninja/fact`
 
-Każda odpowiedź z API jest zapisywana lokalnie w pliku `catfacts.txt` w osobnej linii, w kontrolowanym formacie, który pozwala później wygodnie odczytywać dane, sortować je i wykonywać operacje CRUD.
+Każda odpowiedź z API jest zapisywana lokalnie w pliku `catfacts.txt` oraz `result.txt` w osobnej linii, w kontrolowanym formacie, który pozwala później wygodnie odczytywać dane, sortować je i wykonywać operacje CRUD.
 
 ### Zakres funkcjonalny
 Projekt składa się z dwóch głównych części:
@@ -96,7 +96,7 @@ The application retrieves cat facts from the following endpoint:
 
 `https://catfact.ninja/fact`
 
-Every API response is stored locally in `catfacts.txt`, one entry per line, using a controlled format that makes reading, sorting and CRUD operations straightforward.
+Every API response is stored locally in `catfacts.txt` and `result.txt`, one entry per line, using a controlled format that makes reading, sorting and CRUD operations straightforward.
 
 ### Functional scope
 The project consists of two main parts:
